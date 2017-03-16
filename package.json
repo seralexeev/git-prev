@@ -1,6 +1,6 @@
 {
     "name": "git-prev",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "repository": {
         "type": "git",
         "url": "https://github.com/seralexeev/git-prev"
@@ -19,7 +19,7 @@
         "babel-cli": "^6.0.0"
     },
     "bin": {
-        "nuget-cli": "bin/index.js"
+        "git-prev": "bin/index.js"
     },
     "scripts": {
         "build": "babel index.js --out-file dist/index.js"
