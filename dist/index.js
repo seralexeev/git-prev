@@ -58,7 +58,7 @@ var createPromt = function createPromt(list) {
                 return _ref.apply(this, arguments);
             };
         }(),
-        pageSize: 15
+        pageSize: 100
     }];
 
     _inquirer2.default.prompt(promts).then(function (_ref2) {
