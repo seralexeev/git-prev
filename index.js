@@ -18,7 +18,7 @@ const createPromt = (list) => {
         name: 'branch',
         message: 'Select branch',
         source: async() => list,
-        pageSize: 15
+        pageSize: 100
     }]
 
     inquirer.prompt(promts).then(({ branch }) => {
