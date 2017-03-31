@@ -86,14 +86,15 @@ const createPromt = (list) => {
 
 const commands = { setup, createPromt }
 
-exec('git remote', (err, stdout, stderr) => {
-  if (err) {
-    console.error(err)
-  } else {
-    remoutes = new RegExp(`^${stdout.split('\n').map(x => `${x.trim()}\/`).join('|')}`)
-    showCli()
-  }
-})
+showCli()
+
+// exec('git remote', (err, stdout, stderr) => {
+//   if (err) {
+//     console.error(err)
+//   } else {
+//     remoutes = new RegExp(`^${stdout.split('\n').map(x => `${x.trim()}\/`).join('|')}`)
+//   }
+// })
 
 const showCli = () => {
   const cli = meow(`
