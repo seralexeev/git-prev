@@ -1,34 +1,36 @@
 {
-    "name": "git-prev",
-    "version": "0.0.5",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/seralexeev/git-prev"
-    },
-    "description": "",
-    "main": "index.js",
-    "dependencies": {
-        "babel-polyfill": "^6.23.0",
-        "inquirer": "^3.0.6",
-        "inquirer-autocomplete-prompt": "^0.8.0",
-        "node-fetch": "^1.6.3"
-    },
-    "devDependencies": {
-        "babel-plugin-transform-async-to-generator": "^6.22.0",
-        "babel-preset-es2015": "^6.24.0",
-        "babel-cli": "^6.0.0"
-    },
-    "bin": {
-        "git-prev": "bin/index.js"
-    },
-    "scripts": {
-        "build": "babel index.js --out-file dist/index.js"
-    },
-    "keywords": [
-        "dotnet",
-        "nuget"
-    ],
-    "preferGlobal": true,
-    "author": "Sergey Alexeev",
-    "license": "ISC"
+  "name": "git-prev",
+  "version": "0.0.6",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seralexeev/git-prev"
+  },
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "babel-polyfill": "^6.23.0",
+    "fuzzy": "^0.1.3",
+    "inquirer": "^3.0.6",
+    "inquirer-autocomplete-prompt": "^0.8.0",
+    "meow": "^3.7.0",
+    "node-fetch": "^1.6.3"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.22.0",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-cli": "^6.0.0"
+  },
+  "bin": {
+    "git-prev": "bin/index.js"
+  },
+  "scripts": {
+    "build": "babel index.js --out-file dist/index.js"
+  },
+  "keywords": [
+    "dotnet",
+    "nuget"
+  ],
+  "preferGlobal": true,
+  "author": "Sergey Alexeev",
+  "license": "ISC"
 }
