@@ -23,12 +23,13 @@ const loadHostory = () => new Promise((resolve, reject) => {
 })
 
 const loadAllBranches = () => new Promise((resolve, reject) => {
-  exec('git for-each-ref refs --format=%(refname:short)', (error, stdout, stderr) => {
+  // exec('git for-each-ref refs --format=%(refname:short)', (error, stdout, stderr) => {
+  exec('git branch', (error, stdout, stderr) => {
     if (error) {
       allBranches = []
       reject(stderr)
     } else {
-      resolve(allBranches = stdout.split('\n').map(x => normolize(x)).filter(x => !x.startsWith('*')))
+      resolve(allBranches = stdout.split('\n').map(x => x.trim()).filter(x => !x.startsWith('*')))
     }
   })
 })

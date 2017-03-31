@@ -59,13 +59,14 @@ var loadHostory = function loadHostory() {
 
 var loadAllBranches = function loadAllBranches() {
   return new Promise(function (resolve, reject) {
-    (0, _child_process.exec)('git for-each-ref refs --format=%(refname:short)', function (error, stdout, stderr) {
+    // exec('git for-each-ref refs --format=%(refname:short)', (error, stdout, stderr) => {
+    (0, _child_process.exec)('git branch', function (error, stdout, stderr) {
       if (error) {
         allBranches = [];
         reject(stderr);
       } else {
         resolve(allBranches = stdout.split('\n').map(function (x) {
-          return normolize(x);
+          return x.trim();
         }).filter(function (x) {
           return !x.startsWith('*');
         }));
