@@ -1,0 +1,24 @@
+#!/bin/bash                                                                      
+
+prev="$1"
+new="$2"
+branch_switch="$3"
+
+if [ -z "$branch_switch" ] || [ $branch_switch -eq 0 ]; then
+    exit 0
+fi
+
+zero="0000000000000000000000000000000000000000"
+if [ "$prev" = "$zero" ]; then
+    exit 0
+fi
+
+branch=`git rev-parse --abbrev-ref HEAD`
+git show-ref --verify --quiet refs/heads/$branch
+if [ $? -ne 0 ]; then
+    exit 0
+fi
+
+file=$(git rev-parse --show-toplevel)/.git/checkout-history
+
+echo $branch >> $file
