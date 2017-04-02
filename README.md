@@ -13,10 +13,14 @@ $ git prev
 ## Installation
 ### yarn
 ```sh
-$ yarn add global git-prev
+$ yarn global add git-prev
 
 ```
 ### npm
 ```sh
 $ npm i -g git-prev
+```
+### post-checkout git hook (optional)
+```sh
+somerepo/ $ git prev setup
 ```
