@@ -1,47 +1,38 @@
-import inquirer, { Separator } from 'inquirer'
-import autocomplete from 'inquirer-autocomplete-prompt'
-import fetch from 'node-fetch'
-import 'babel-polyfill'
-import fs from 'fs'
-import { exec } from 'child_process'
-import path from 'path'
-import meow from 'meow'
-import fuzzy from 'fuzzy'
+const inquirer = require("inquirer");
+const autocomplete = require("inquirer-autocomplete-prompt");
+const fs = require("fs-extra");
+const { exec } = require("child_process");
+const path = require("path");
+const meow = require("meow");
+const fuzzy = require("fuzzy");
+const consola = require('consola')
 
-inquirer.registerPrompt('autocomplete', autocomplete);
+inquirer.registerPrompt("autocomplete", autocomplete);
 
-(async (data) => {
-  try {
-    data = await Promise.all([
-      getAllBranches(),
-      getHistory().catch(_ => console.warn('Can\'t find checkout history. Please use git prev setup')),
-      getRemotes()
-    ].map(x => x.then(x => x).catch(e => { })))
-  } catch (e) { }
+(async data => {
+  const [allBranches = [], history = [], remotes = []] = await Promise.all([
+    getAllBranches(),
+    getHistory(),
+    getRemotes()
+  ]);
 
-  const [
-    allBranches = [],
-    history = [],
-    remotes = []
-  ] = data
-
-  showCli({ allBranches, history, remotes })
-})()
+  showCli({ allBranches, history, remotes });
+})();
 
 const searchBranch = async ({ history, allBranches }, input) => {
   if (!input) {
     if (history.length) {
-      return history
+      return history;
     } else {
-      return allBranches
+      return allBranches;
     }
   }
 
-  return fuzzy.filter(input, allBranches).map(x => x.original)
-}
+  return fuzzy.filter(input, allBranches).map(x => x.original);
+};
 
 function showCli(data) {
-  const commands = { createPromt, setup }
+  const commands = { createPromt, setup };
 
   const cli = meow(`
     Usage
@@ -49,83 +40,96 @@ function showCli(data) {
 
     Setup git hook for checkout history
       $ git prev setup
-  `)
+  `);
 
-  const [command = 'createPromt'] = cli.input
+  const [command = "createPromt"] = cli.input;
 
   if (command in commands) {
-    commands[command](data, cli.flags)
+    commands[command](data, cli.flags);
   } else {
-    cli.showHelp()
+    cli.showHelp();
   }
 }
 
-function createPromt(data, flags) {
-  const promts = [{
-    type: 'autocomplete',
-    name: 'branch',
-    message: 'Select branch',
-    source: (_, input) => searchBranch(data, input),
-    pageSize: 15
-  }]
+async function createPromt(data, flags) {
+  const promts = [
+    {
+      type: "autocomplete",
+      name: "branch",
+      message: "Select branch",
+      source: (_, input) => searchBranch(data, input),
+      pageSize: 15
+    }
+  ];
 
-  const { remotes } = data
-  const regexp = new RegExp(`(${remotes.join('|')})\/`)
+  const { remotes } = data;
+  const regexp = new RegExp(`(${remotes.join("|")})\/`);
 
-  inquirer.prompt(promts).then(({ branch }) => {
-    execute(`git checkout ${branch.replace(regexp, '')}`)
-  })
+  const { branch } = await inquirer.prompt(promts);
+  await execute(`git checkout ${branch.replace(regexp, "")}`);
 }
 
-function setup() {
-  execute(`git rev-parse --show-toplevel`).then(x => {
-    fs.readFile(path.join(__dirname, 'post-checkout'), (err, data) => {
-      if (err)
-        throw err
-
-      fs.writeFile(path.join(x.trim(), '.git', 'hooks', 'post-checkout'), data, err => {
-        if (err)
-          throw err
-
-        console.log('success')
-      })
-    })
-  })
+async function setup() {
+  const root = await getGitRoot();
+  const hook = await fs.readFile(path.join(__dirname, "post-checkout"));
+  await fs.writeFile(path.join(root, "hooks", "post-checkout"), hook);
+  await fs.writeFile(path.join(root, "hooks", "checkout-history"), "");
+  consola.info("success");
 }
 
-function getRemotes() {
-  return execute('git remote')
-    .then(stdout => stdout.split('\n').map(x => x.trim()).filter(x => !!x))
+async function getRemotes() {
+  try {
+    const stdout = await execute("git remote");
+    return stdout
+      .split("\n")
+      .map(x => x.trim())
+      .filter(Boolean);
+  } catch (e) {
+    consola.warn(e);
+    return [];
+  }
 }
 
-function getAllBranches() {
-  return execute('git for-each-ref refs --format=%(refname:short)')
-    .then(stdout => stdout.split('\n').map(x => x.trim()).filter(x => !!x))
+async function getAllBranches() {
+  const stdout = await execute('git for-each-ref refs --format="%(refname:short)"');
+  return stdout
+    .split("\n")
+    .map(x => x.trim())
+    .filter(Boolean);
 }
 
-function getHistory() {
-  return execute(`git rev-parse --show-toplevel`).then(x =>
-    new Promise((resolve, reject) => {
-      fs.readFile(path.join(x.trim(), '.git', 'checkout-history'), 'utf8', (err, data) => {
-        if (err) {
-          reject(err)
+async function getGitRoot() {
+  const root = await execute(`git rev-parse --show-toplevel`);
+  return path.join(root.trim(), ".git");
+}
 
-        } else {
-          resolve([...new Set(data.split('\n').map(x => x.trim()).filter(x => !!x).reverse())])
-        }
-      })
-    })
-  )
+async function getHistory() {
+  try {
+    const root = await getGitRoot();
+    const data = await fs.readFile(path.join(root, "hooks", "checkout-history"), "utf8");
+    return [
+      ...new Set(
+        data
+          .split("\n")
+          .map(x => x.trim())
+          .filter(Boolean)
+          .reverse()
+      )
+    ];
+  } catch (e) {
+    consola.warn("Can't find checkout history. Please use git prev setup");
+    return [];
+  }
 }
 
 function execute(command) {
   return new Promise((resolve, reject) => {
     exec(command, (err, stdout, stderr) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(stdout)
+        resolve(stdout);
       }
-    })
-  })
+    });
+  });
 }
