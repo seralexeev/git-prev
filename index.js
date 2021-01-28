@@ -1,42 +1,37 @@
 #!/usr/bin/env node
 
-const inquirer = require("inquirer");
-const autocomplete = require("inquirer-autocomplete-prompt");
-const fs = require("fs-extra");
-const { exec } = require("child_process");
-const path = require("path");
-const meow = require("meow");
-const fuzzy = require("fuzzy");
-const consola = require('consola')
+const inquirer = require('inquirer');
+const autocomplete = require('inquirer-autocomplete-prompt');
+const fs = require('fs-extra');
+const { exec } = require('child_process');
+const path = require('path');
+const meow = require('meow');
+const fuzzy = require('fuzzy');
 
-inquirer.registerPrompt("autocomplete", autocomplete);
+inquirer.registerPrompt('autocomplete', autocomplete);
 
-(async data => {
-  const [allBranches = [], history = [], remotes = []] = await Promise.all([
-    getAllBranches(),
-    getHistory(),
-    getRemotes()
-  ]);
+(async () => {
+    const [allBranches = [], history = [], remotes = []] = await Promise.all([
+        getAllBranches(),
+        getHistory(),
+        getRemotes(),
+    ]);
 
-  showCli({ allBranches, history, remotes });
+    showCli({ allBranches, history, remotes });
 })();
 
 const searchBranch = async ({ history, allBranches }, input) => {
-  if (!input) {
-    if (history.length) {
-      return history;
-    } else {
-      return allBranches;
+    if (!input) {
+        return history.length ? history : allBranches;
     }
-  }
 
-  return fuzzy.filter(input, allBranches).map(x => x.original);
+    return fuzzy.filter(input, allBranches).map((x) => x.original);
 };
 
 function showCli(data) {
-  const commands = { createPromt, setup };
+    const commands = { createPromt, setup };
 
-  const cli = meow(`
+    const cli = meow(`
     Usage
       $ git prev
 
@@ -44,94 +39,86 @@ function showCli(data) {
       $ git prev setup
   `);
 
-  const [command = "createPromt"] = cli.input;
+    const [command = 'createPromt'] = cli.input;
 
-  if (command in commands) {
-    commands[command](data, cli.flags);
-  } else {
-    cli.showHelp();
-  }
+    if (command in commands) {
+        commands[command](data, cli.flags);
+    } else {
+        cli.showHelp();
+    }
 }
 
-async function createPromt(data, flags) {
-  const promts = [
-    {
-      type: "autocomplete",
-      name: "branch",
-      message: "Select branch",
-      source: (_, input) => searchBranch(data, input),
-      pageSize: 15
-    }
-  ];
+async function createPromt(data) {
+    const promts = [
+        {
+            type: 'autocomplete',
+            name: 'branch',
+            message: 'Select branch',
+            source: (_, input) => searchBranch(data, input),
+            pageSize: 15,
+        },
+    ];
 
-  const { remotes } = data;
-  const regexp = new RegExp(`(${remotes.join("|")})\/`);
+    const { remotes } = data;
+    const regexp = new RegExp(`(${remotes.join('|')})\/`);
 
-  const { branch } = await inquirer.prompt(promts);
-  await execute(`git checkout ${branch.replace(regexp, "")}`);
+    const { branch } = await inquirer.prompt(promts);
+    await execute(`git checkout ${branch.replace(regexp, '')}`);
 }
 
 async function setup() {
-  const root = await getGitRoot();
-  const hook = await fs.readFile(path.join(__dirname, "post-checkout"));
-  await fs.writeFile(path.join(root, "hooks", "post-checkout"), hook);
-  await fs.writeFile(path.join(root, "hooks", "checkout-history"), "");
-  consola.info("success");
+    const root = await getGitRoot();
+    const hook = await fs.readFile(path.join(__dirname, 'post-checkout'));
+    await fs.writeFile(path.join(root, 'hooks', 'post-checkout'), hook);
+    await fs.writeFile(path.join(root, 'hooks', 'checkout-history'), '');
+    console.info('success');
 }
 
 async function getRemotes() {
-  try {
-    const stdout = await execute("git remote");
-    return stdout
-      .split("\n")
-      .map(x => x.trim())
-      .filter(Boolean);
-  } catch (e) {
-    consola.warn(e);
-    return [];
-  }
+    try {
+        const stdout = await execute('git remote');
+        return stdout
+            .split('\n')
+            .map((x) => x.trim())
+            .filter(Boolean);
+    } catch (e) {
+        console.warn(e);
+        return [];
+    }
 }
 
 async function getAllBranches() {
-  const stdout = await execute('git for-each-ref refs --format="%(refname:short)"');
-  return stdout
-    .split("\n")
-    .map(x => x.trim())
-    .filter(Boolean);
+    const stdout = await execute('git for-each-ref refs --format="%(refname:short)"');
+    return stdout
+        .split('\n')
+        .map((x) => x.trim())
+        .filter(Boolean);
 }
 
 async function getGitRoot() {
-  const root = await execute(`git rev-parse --show-toplevel`);
-  return path.join(root.trim(), ".git");
+    const root = await execute(`git rev-parse --show-toplevel`);
+    return path.join(root.trim(), '.git');
 }
 
 async function getHistory() {
-  try {
-    const root = await getGitRoot();
-    const data = await fs.readFile(path.join(root, "hooks", "checkout-history"), "utf8");
-    return [
-      ...new Set(
-        data
-          .split("\n")
-          .map(x => x.trim())
-          .filter(Boolean)
-          .reverse()
-      )
-    ];
-  } catch (e) {
-    consola.warn("Can't find checkout history. Please use git prev setup");
-    return [];
-  }
+    try {
+        const root = await getGitRoot();
+        const data = await fs.readFile(path.join(root, 'hooks', 'checkout-history'), 'utf8');
+        return [
+            ...new Set(
+                data
+                    .split('\n')
+                    .map((x) => x.trim())
+                    .filter(Boolean)
+                    .reverse(),
+            ),
+        ];
+    } catch (e) {
+        console.warn("Can't find checkout history. Please use git prev setup");
+        return [];
+    }
 }
 
 function execute(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(stdout);
-      }
-    });
-  });
+    return new Promise((resolve, reject) => exec(command, (err, stdout) => (err ? reject(err) : resolve(stdout))));
 }
