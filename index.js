@@ -70,7 +70,7 @@ async function setup() {
     const root = await getGitRoot();
     const hook = await fs.readFile(path.join(__dirname, 'post-checkout'));
     await fs.writeFile(path.join(root, 'hooks', 'post-checkout'), hook);
-    await fs.writeFile(path.join(root, 'hooks', 'checkout-history'), '');
+    await fs.writeFile(path.join(root, 'checkout-history'), '');
     console.info('success');
 }
 
@@ -103,7 +103,7 @@ async function getGitRoot() {
 async function getHistory() {
     try {
         const root = await getGitRoot();
-        const data = await fs.readFile(path.join(root, 'hooks', 'checkout-history'), 'utf8');
+        const data = await fs.readFile(path.join(root, 'checkout-history'), 'utf8');
         return [
             ...new Set(
                 data
