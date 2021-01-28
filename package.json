@@ -5,7 +5,7 @@
         "type": "git",
         "url": "https://github.com/seralexeev/git-prev"
     },
-    "description": "",
+    "description": "Simple and handy tool for quick branches search and checkout",
     "main": "index.js",
     "dependencies": {
         "fs-extra": "9.1.0",
